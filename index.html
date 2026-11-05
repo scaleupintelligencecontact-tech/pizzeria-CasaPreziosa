@@ -20,286 +20,479 @@
         body { font-family: 'Poppins', sans-serif; background-color: #0c0a09; color: #f5f5f4; overflow-x: hidden; }
         h1, h2, h3, .font-playfair { font-family: 'Playfair Display', serif; }
 
-        /* EFFET 3D NET (CORRECTION DU MINI TRAIT) */
-        .dish-container {
-            position: relative; width: 100%; height: 400px; border-radius: 1.5rem; overflow: hidden; cursor: pointer;
-            background-color: #1c1917; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            perspective: 1000px; transform-style: preserve-3d;
-            outline: 1px solid transparent; -webkit-mask-image: -webkit-radial-gradient(white, black); mask-image: radial-gradient(white, black);
-            transform: translateZ(0); -webkit-backface-visibility: hidden; backface-visibility: hidden;
+        /* =========================================
+           EFFET 3D OPTIMISÉ POUR MOBILE ET PC
+           ========================================= */
+        
+        .dish-card {
+            background-color: #1c1917;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
         }
-        .dish-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; z-index: 1; transform: translateZ(0) scale(1); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
-        .dish-product { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) translateZ(20px); width: 80%; height: 80%; object-fit: contain; display: block; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.4s ease; z-index: 2; will-change: transform, filter; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.4)); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
-        .dish-container:hover .dish-bg, .dish-container:active .dish-bg { transform: translateZ(0) scale(1.05); }
-        .dish-container:hover .dish-product, .dish-container:active .dish-product { transform: translate(-50%, -50%) translateZ(100px) scale(1.3) rotateX(5deg) rotateY(-5deg); filter: drop-shadow(0 30px 40px rgba(0,0,0,0.8)); }
-        .text-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 2rem; background: linear-gradient(to top, rgba(12,10,9,0.95) 0%, rgba(12,10,9,0.6) 50%, transparent 100%); z-index: 3; pointer-events: none; transition: transform 0.4s ease; }
-        .dish-container:hover .text-overlay { transform: translateY(-5px); }
 
+        /* La zone de l'image */
+        .image-wrapper {
+            position: relative;
+            width: 100%;
+            height: 250px; /* Hauteur adaptée au mobile */
+            overflow: hidden;
+            cursor: pointer;
+            background-color: #0c0a09;
+            /* Perspective pour la 3D */
+            perspective: 1000px;
+        }
+
+        @media (min-width: 768px) {
+            .image-wrapper { height: 350px; } /* Plus grand sur PC */
+        }
+
+        /* L'image de fond (le décor) */
+        .bg-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease, filter 0.6s ease;
+            z-index: 1;
+        }
+
+        /* L'image du produit (la pizza qui ressort) */
+        .product-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 75%;
+            height: 75%;
+            object-fit: contain;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.5s ease;
+            z-index: 2;
+            filter: drop-shadow(0 15px 20px rgba(0,0,0,0.8));
+        }
+
+        /* EFFET AU SURVOL (PC) ET AU TOUCHER (MOBILE) */
+        .image-wrapper:hover .bg-img,
+        .image-wrapper:active .bg-img {
+            transform: scale(1.1);
+            filter: brightness(0.4) blur(2px); /* Assombrit le fond */
+        }
+
+        .image-wrapper:hover .product-img,
+        .image-wrapper:active .product-img {
+            transform: translate(-50%, -55%) scale(1.2) rotateX(10deg) rotateY(-5deg);
+            filter: drop-shadow(0 30px 40px rgba(0,0,0,0.9));
+        }
+
+        /* Textes et Prix */
+        .dish-info {
+            padding: 1.5rem;
+            position: relative;
+            z-index: 3;
+            background-color: #1c1917;
+        }
+
+        /* Navbar */
         #navbar { transition: all 0.4s ease; }
         #navbar.scrolled { background-color: rgba(12, 10, 9, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+        /* Modales */
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); backdrop-filter: blur(5px); }
-        .modal-content { background-color: #292524; color: #e7e5e4; margin: 10% auto; padding: 30px; border-radius: 12px; max-width: 700px; position: relative; border: 1px solid #44403c; }
+        .modal-content { background-color: #292524; color: #e7e5e4; margin: 20% auto; padding: 30px; border-radius: 12px; max-width: 90%; position: relative; border: 1px solid #44403c; }
+        @media(min-width: 768px) { .modal-content { max-width: 700px; margin: 10% auto; } }
         .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; color: #a8a29e; cursor: pointer; }
-        .close-btn:hover { color: #d97706; }
     </style>
 </head>
 <body class="antialiased">
 
-    <nav id="navbar" class="fixed w-full z-50 text-white py-5 px-4 sm:px-8 flex justify-between items-center transition-all">
-        <div class="font-playfair text-2xl font-bold tracking-wider text-amber-500">CASA PREZIOSA</div>
+    <!-- NAVBAR -->
+    <nav id="navbar" class="fixed w-full z-50 text-white py-4 px-4 sm:px-8 flex justify-between items-center transition-all">
+        <div class="font-playfair text-xl md:text-2xl font-bold tracking-wider text-amber-500">CASA PREZIOSA</div>
         <div class="hidden md:flex space-x-8 text-sm font-semibold uppercase tracking-widest text-stone-300">
             <a href="#accueil" class="hover:text-amber-500 transition-colors">Accueil</a>
             <a href="#carte" class="hover:text-amber-500 transition-colors">La Carte</a>
             <a href="#desserts" class="hover:text-amber-500 transition-colors">Desserts</a>
             <a href="#reservation" class="hover:text-amber-500 transition-colors">Réserver</a>
         </div>
-        <a href="#reservation" class="hidden md:block bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-full font-semibold transition-all shadow-lg hover:shadow-amber-600/50">Réserver</a>
+        <a href="#reservation" class="hidden md:block bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-full font-semibold transition-all shadow-lg">Réserver</a>
     </nav>
 
-    <!-- ACCUEIL (Ta photo terrasse) -->
+    <!-- ACCUEIL -->
     <header id="accueil" class="relative h-screen flex items-center justify-center text-center">
         <div class="absolute inset-0 z-0">
-            <!-- Si l'image locale n'est pas trouvée sur GitHub, il affichera l'image de secours (le bar) -->
-            <img src="images/terrasse.jpg" alt="Casa Preziosa Terrasse" class="w-full h-full object-cover brightness-[0.5]" onerror="this.src='https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop'">
+            <!-- Image de terrasse : utilise ton image locale si elle existe, sinon celle-ci -->
+            <img src="images/terrasse.jpg" alt="Casa Preziosa Terrasse" class="w-full h-full object-cover brightness-[0.4]" onerror="this.src='https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop'">
         </div>
-        <div class="relative z-10 px-4 max-w-4xl mt-20">
-            <h1 class="font-playfair text-5xl md:text-7xl text-white mb-6 drop-shadow-2xl leading-tight">L'Art de la Pizza<br><span class="text-amber-500">Napolitaine</span></h1>
-            <p class="text-stone-200 text-lg md:text-xl mb-10 font-light max-w-2xl mx-auto drop-shadow-lg">Une pâte aérienne, des ingrédients frais et un four napolitain traditionnel au cœur de Thionville.</p>
-            <div class="flex flex-col sm:flex-row justify-center gap-6">
-                <a href="#carte" class="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]">Découvrir la carte</a>
-            </div>
+        <div class="relative z-10 px-4 max-w-4xl mt-10">
+            <h1 class="font-playfair text-4xl md:text-7xl text-white mb-4 drop-shadow-2xl leading-tight">L'Art de la Pizza<br><span class="text-amber-500">Napolitaine</span></h1>
+            <p class="text-stone-200 text-base md:text-xl mb-8 font-light max-w-2xl mx-auto drop-shadow-lg">Une pâte aérienne, des ingrédients frais et un four napolitain traditionnel au cœur de Thionville.</p>
+            <a href="#carte" class="inline-block bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 md:py-4 rounded-full font-bold text-lg transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]">Découvrir la carte</a>
         </div>
     </header>
 
     <!-- SECTION PIZZAS -->
-    <div id="carte" class="relative bg-stone-950 py-20">
-        <div class="text-center mb-16">
-            <h2 class="font-playfair text-4xl md:text-6xl text-amber-500 mb-4">Les Pizzas</h2>
-            <p class="text-stone-400 text-lg">Survolez pour voir la pizza grossir en 3D</p>
+    <div id="carte" class="relative bg-stone-950 py-16 md:py-24">
+        <div class="text-center mb-12 px-4">
+            <h2 class="font-playfair text-3xl md:text-5xl text-amber-500 mb-2">Les Pizzas</h2>
+            <p class="text-stone-400 text-sm md:text-base">Touchez ou survolez pour voir la pizza en 3D</p>
         </div>
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-wrap justify-center gap-10">
+            <div class="flex flex-wrap justify-center gap-6 md:gap-10">
+                
                 <!-- MARGHERITA -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-vector/2023/10/24/original/pizza-margherita-with-tomato-and-basil-png-image_13299404.png" class="dish-product" alt="Margherita">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Margherita</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella Fior di Latte, Basilic.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">13.90€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <!-- Image de fond (URL fiable) -->
+                        <img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <!-- Image 3D (URL fiable PNG transparent) -->
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44077.png" class="product-img" alt="Margherita" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Margherita</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella Fior di Latte, Basilic.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">13.90€</span>
+                    </div>
                 </div>
+
                 <!-- SUPER MARINARA -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1590947132387-155cc02f3212?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20230413/original/pngtree-pizza-with-tomatoes-and-basil-png-image_9052866.png" class="dish-product" alt="Marinara">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Super Marinara</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Ail, Origan, Huile d'olive.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">13.90€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1590947132387-155cc02f3212?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44078.png" class="product-img" alt="Marinara" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Super Marinara</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Ail, Origan, Huile d'olive.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">13.90€</span>
+                    </div>
                 </div>
+
                 <!-- MARGHERITA NAPOLETANA -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20240311/original/pngtree-pizza-with-mozzarella-and-basil-png-image_14524191.png" class="dish-product" alt="Napoletana">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Margherita Napoletana</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella Fior di Latte, Mozzarella di Bufala, Basilic.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">14.90€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44079.png" class="product-img" alt="Napoletana" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Margherita Napoletana</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella Fior di Latte, Mozzarella di Bufala, Basilic.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">14.90€</span>
+                    </div>
                 </div>
+
                 <!-- PROSCIUTTO -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1628840042765-356cda07504e?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20240116/original/pngtree-pizza-with-ham-and-cheese-png-image_14020136.png" class="dish-product" alt="Prosciutto">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Prosciutto</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella Fior di Latte, Jambon blanc italien, Basilic.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">14.80€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1628840042765-356cda07504e?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44080.png" class="product-img" alt="Prosciutto" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Prosciutto</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella, Jambon blanc, Basilic.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">14.80€</span>
+                    </div>
                 </div>
+
                 <!-- SUPER REGINA -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20230413/original/pngtree-pizza-with-mushrooms-and-ham-png-image_9052870.png" class="dish-product" alt="Regina">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Super Regina</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella, Jambon blanc, Champignons frais, Crème de Parmesan.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">15.50€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44081.png" class="product-img" alt="Regina" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Super Regina</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella, Jambon, Champignons, Parmesan.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">15.50€</span>
+                    </div>
                 </div>
+
                 <!-- DIAVOLA -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20240116/original/pngtree-spicy-pizza-with-salami-png-image_14020137.png" class="dish-product" alt="Diavola">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Diavola</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella, Ventrèche, Ricotta au piment.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">15.50€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44082.png" class="product-img" alt="Diavola" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Diavola</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella, Ventrèche, Ricotta au piment.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">15.50€</span>
+                    </div>
                 </div>
+
                 <!-- SICILIANA -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20240311/original/pngtree-pizza-with-olives-and-anchovies-png-image_14524202.png" class="dish-product" alt="Siciliana">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Siciliana</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella, Origan, Anchois, Olives, Tomates séchées.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">15.80€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44083.png" class="product-img" alt="Siciliana" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Siciliana</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella, Anchois, Olives, Tomates séchées.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">15.80€</span>
+                    </div>
                 </div>
+
                 <!-- SAN BERNARDINO -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20240116/original/pngtree-pizza-with-ham-and-olives-png-image_14020139.png" class="dish-product" alt="San Bernardino">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">San Bernardino</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella, Jambon blanc, Olives, Crème de Parmesan, Basilic.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">16.10€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44084.png" class="product-img" alt="San Bernardino" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">San Bernardino</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella, Jambon, Olives, Parmesan.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">16.10€</span>
+                    </div>
                 </div>
+
                 <!-- SAN DANIELE -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1585238342024-78d387f4a707?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20230413/original/pngtree-pizza-with-prosciutto-and-rucola-png-image_9052875.png" class="dish-product" alt="San Daniele">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">San Daniele</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella, Jambon cru San Daniele, Roquette, Parmesan.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">16.50€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1585238342024-78d387f4a707?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44085.png" class="product-img" alt="San Daniele" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">San Daniele</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella, Jambon cru, Roquette, Parmesan.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">16.50€</span>
+                    </div>
                 </div>
+
                 <!-- QUATTRO FORMAGGI -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20240311/original/pngtree-four-cheese-pizza-png-image_14524215.png" class="dish-product" alt="Quattro Formaggi">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Quattro Formaggi</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella, Parmesan, Taleggio, Gorgonzola.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">15.20€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44086.png" class="product-img" alt="Quattro Formaggi" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Quattro Formaggi</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella, Parmesan, Taleggio, Gorgonzola.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">15.20€</span>
+                    </div>
                 </div>
-                <!-- CALZONE CLASSICO -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="images/calzone.jpg" class="dish-bg" alt="Decor Calzone" onerror="this.src='https://images.unsplash.com/photo-1627057856899-8710e421739d?q=80&w=1000&auto=format&fit=crop'">
-                    <img src="images/calzone.png" class="dish-product" alt="Calzone" onerror="this.src='https://png.pngtree.com/png-clipart/20230413/original/pngtree-pizza-with-tomatoes-and-basil-png-image_9052866.png'">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Calzone Classico</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella, Jambon blanc italien, Champignons.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">16.20€</span></div>
+
+                <!-- CALZONE CLASSICO (Tes images) -->
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="images/calzone.jpg" class="bg-img" alt="Décor Calzone" onerror="this.src='https://images.unsplash.com/photo-1627057856899-8710e421739d?q=80&w=1000&auto=format&fit=crop'">
+                        <img src="images/calzone.png" class="product-img" alt="Calzone" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Calzone Classico</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella, Jambon, Champignons.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">16.20€</span>
+                    </div>
                 </div>
-                <!-- PISTACCHISSIMO -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="images/pistacchissimo.jpg" class="dish-bg" alt="Decor Pistacchissimo" onerror="this.src='https://images.unsplash.com/photo-1600028990483-2f44096d7785?q=80&w=1000&auto=format&fit=crop'">
-                    <img src="images/pistacchissimo.png" class="dish-product" alt="Pistacchissimo" onerror="this.src='https://png.pngtree.com/png-vector/2023/10/24/original/pizza-margherita-with-tomato-and-basil-png-image_13299404.png'">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Pistacchissimo</h3><p class="text-sm text-stone-300 mb-2">Mozzarella, Mortadelle IGP, Pesto de Pistaches, Burrata, Basilic.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">18.50€</span></div>
+
+                <!-- PISTACCHISSIMO (Tes images) -->
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="images/pistacchissimo.jpg" class="bg-img" alt="Décor Pistacchissimo" onerror="this.src='https://images.unsplash.com/photo-1600028990483-2f44096d7785?q=80&w=1000&auto=format&fit=crop'">
+                        <img src="images/pistacchissimo.png" class="product-img" alt="Pistacchissimo" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Pistacchissimo</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Mozzarella, Mortadelle, Pesto de Pistaches, Burrata.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">18.50€</span>
+                    </div>
                 </div>
+
                 <!-- PROSCIUTTISSIMO -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1595854341625-f33ee10dbf94?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20230413/original/pngtree-pizza-with-ham-and-cheese-png-image_9052877.png" class="dish-product" alt="Prosciuttissimo">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Prosciuttissimo</h3><p class="text-sm text-stone-300 mb-2">Sauce tomate, Mozzarella, Jambon cru San Daniele, Mozza di Bufala.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">18.30€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1595854341625-f33ee10dbf94?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/pizza/pizza_PNG44087.png" class="product-img" alt="Prosciuttissimo" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Prosciuttissimo</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Sauce tomate, Mozzarella, Jambon cru, Mozza di Bufala.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">18.30€</span>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
 
     <!-- SECTION DESSERTS -->
-    <div id="desserts" class="relative bg-stone-900 py-20">
-        <div class="text-center mb-16">
-            <h2 class="font-playfair text-4xl md:text-6xl text-amber-500 mb-4">I Dolci</h2>
-            <p class="text-stone-400 text-lg">Nos desserts italiens</p>
+    <div id="desserts" class="relative bg-stone-900 py-16 md:py-24">
+        <div class="text-center mb-12 px-4">
+            <h2 class="font-playfair text-3xl md:text-5xl text-amber-500 mb-2">I Dolci</h2>
+            <p class="text-stone-400 text-sm md:text-base">Nos desserts italiens</p>
         </div>
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-wrap justify-center gap-10">
+            <div class="flex flex-wrap justify-center gap-6 md:gap-10">
+                
                 <!-- TIRAMISU -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1571115177098-24ec42ed204d?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20230426/original/pngtree-tiramisu-cake-italian-dessert-png-image_9112583.png" class="dish-product" alt="Tiramisu">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Tiramisu</h3><p class="text-sm text-stone-300 mb-2">Le classique au café avec une note d'amaretto.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">7.50€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1571115177098-24ec42ed204d?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/tiramisu/tiramisu_PNG16.png" class="product-img" alt="Tiramisu" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Tiramisu</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Le classique au café avec une note d'amaretto.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">7.50€</span>
+                    </div>
                 </div>
+
                 <!-- PANNA COTTA -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20230927/original/pngtree-panna-cotta-with-berries-png-image_13180423.png" class="dish-product" alt="Panna Cotta">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Panna Cotta</h3><p class="text-sm text-stone-300 mb-2">La vraie crème cuite avec des fruits de saison.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">5.90€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/dessert/dessert_PNG38.png" class="product-img" alt="Panna Cotta" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Panna Cotta</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">La vraie crème cuite avec des fruits de saison.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">5.90€</span>
+                    </div>
                 </div>
+
                 <!-- TARTUFO DI PIZZO -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1563805042-7684c019e1cb?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20230426/original/pngtree-chocolate-ice-cream-png-image_9112585.png" class="dish-product" alt="Tartufo">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Tartufo di Pizzo</h3><p class="text-sm text-stone-300 mb-2">Nocciola & Cioccolato ou Pistacchio & Cioccolato bianco.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">6.20€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1563805042-7684c019e1cb?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/ice_cream/ice_cream_PNG5088.png" class="product-img" alt="Tartufo" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Tartufo di Pizzo</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Nocciola & Cioccolato ou Pistacchio & Cioccolato.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">6.20€</span>
+                    </div>
                 </div>
+
                 <!-- AFFOGATO AL CAFFE -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20230426/original/pngtree-affogato-ice-cream-png-image_9112587.png" class="dish-product" alt="Affogato">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Affogato al Caffè</h3><p class="text-sm text-stone-300 mb-2">Un expresso coulé sur une boule de glace.</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">5.30€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/ice_cream/ice_cream_PNG5090.png" class="product-img" alt="Affogato" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Affogato al Caffè</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Un expresso coulé sur une boule de glace.</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">5.30€</span>
+                    </div>
                 </div>
+
                 <!-- PANZEROTTI NUTELLA -->
-                <div class="dish-container w-full md:w-[calc(50%-1.25rem)] max-w-2xl">
-                    <img src="https://images.unsplash.com/photo-1621236378699-8597faf6a176?q=80&w=1000&auto=format&fit=crop" class="dish-bg" alt="Decor">
-                    <img src="https://png.pngtree.com/png-clipart/20230413/original/pngtree-pizza-with-chocolate-png-image_9052879.png" class="dish-product" alt="Panzerotti">
-                    <div class="text-overlay"><h3 class="font-playfair text-3xl text-amber-500 mb-1">Panzerotti Nutella</h3><p class="text-sm text-stone-300 mb-2">Et sa boule de glace au choix (+1€ pistache).</p><span class="inline-block bg-amber-600 text-white font-bold px-3 py-1 rounded-full text-sm">5.80€</span></div>
+                <div class="dish-card w-full md:w-[calc(50%-1.25rem)] lg:w-[calc(33.33%-1.25rem)] max-w-md">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1621236378699-8597faf6a176?q=80&w=1000&auto=format&fit=crop" class="bg-img" alt="Décor">
+                        <img src="https://pngimg.com/uploads/donut/donut_PNG2295.png" class="product-img" alt="Panzerotti" onerror="this.style.display='none'">
+                    </div>
+                    <div class="dish-info">
+                        <h3 class="font-playfair text-2xl text-amber-500 mb-1">Panzerotti Nutella</h3>
+                        <p class="text-xs md:text-sm text-stone-400 mb-3 h-10">Et sa boule de glace au choix (+1€ pistache).</p>
+                        <span class="inline-block bg-amber-600 text-white font-bold px-4 py-1.5 rounded-full text-sm">5.80€</span>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
 
     <!-- SECTION RÉSERVATION -->
-    <section id="reservation" class="py-32 bg-stone-100 relative">
+    <section id="reservation" class="py-20 md:py-32 bg-stone-100 relative">
         <div class="max-w-4xl mx-auto px-4 relative z-10">
             <div class="bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-stone-200">
-                <div class="md:w-5/12 p-10 bg-stone-900 text-white flex flex-col justify-center relative overflow-hidden">
+                
+                <div class="md:w-5/12 p-8 md:p-10 bg-stone-900 text-white flex flex-col justify-center relative overflow-hidden">
                     <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#d97706 1px, transparent 1px); background-size: 20px 20px;"></div>
                     <div class="relative z-10">
-                        <h2 class="font-playfair text-4xl mb-6 text-amber-500">Réserver</h2>
-                        <p class="text-stone-400 mb-8 text-sm">Pour les groupes de plus de 8 personnes, veuillez nous appeler.</p>
-                        <div class="flex items-center space-x-4 mb-6">
-                            <div class="bg-amber-600/20 p-3 rounded-full text-amber-500 text-xl">📞</div>
-                            <a href="tel:+33354860283" class="hover:text-amber-500 transition-colors font-medium">+33 3 54 86 02 83</a>
+                        <h2 class="font-playfair text-3xl md:text-4xl mb-4 text-amber-500">Réserver</h2>
+                        <p class="text-stone-400 mb-6 text-sm">Pour les groupes de plus de 8 personnes, veuillez nous appeler.</p>
+                        <div class="flex items-center space-x-4 mb-4">
+                            <div class="bg-amber-600/20 p-3 rounded-full text-amber-500 text-lg">📞</div>
+                            <a href="tel:+33354860283" class="hover:text-amber-500 transition-colors font-medium text-sm md:text-base">+33 3 54 86 02 83</a>
                         </div>
                         <div class="flex items-center space-x-4">
-                            <div class="bg-amber-600/20 p-3 rounded-full text-amber-500 text-xl">📍</div>
-                            <p class="font-medium text-sm">10 Cour Du Mersch,<br>57100 Thionville</p>
+                            <div class="bg-amber-600/20 p-3 rounded-full text-amber-500 text-lg">📍</div>
+                            <p class="font-medium text-sm md:text-base">10 Cour Du Mersch,<br>57100 Thionville</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="md:w-7/12 p-10">
-                    <!-- Le formulaire est prêt, il enverra les mails via Web3Forms -->
+                <div class="md:w-7/12 p-8 md:p-10">
                     <form id="booking-form" class="space-y-4">
-                        <input type="checkbox" name="botcheck" class="hidden" style="display:none !important" tabindex="-1" autocomplete="off">
                         <div>
                             <label class="block text-sm font-semibold text-stone-700 mb-1">Nom complet</label>
-                            <input type="text" name="name" required class="w-full rounded-lg border-stone-300 p-3 border bg-stone-50">
+                            <input type="text" required class="w-full rounded-lg border-stone-300 p-3 border bg-stone-50 text-sm">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-stone-700 mb-1">Téléphone</label>
-                            <input type="tel" name="phone" required class="w-full rounded-lg border-stone-300 p-3 border bg-stone-50">
+                            <input type="tel" required class="w-full rounded-lg border-stone-300 p-3 border bg-stone-50 text-sm">
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-stone-700 mb-1">Date</label>
-                                <input type="date" name="date" required class="w-full rounded-lg border-stone-300 p-3 border bg-stone-50">
+                                <input type="date" required class="w-full rounded-lg border-stone-300 p-3 border bg-stone-50 text-sm">
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-stone-700 mb-1">Heure</label>
-                                <input type="time" name="time" required class="w-full rounded-lg border-stone-300 p-3 border bg-stone-50">
+                                <input type="time" required class="w-full rounded-lg border-stone-300 p-3 border bg-stone-50 text-sm">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-stone-700 mb-1">Nombre de personnes</label>
-                            <select name="guests" required class="w-full rounded-lg border-stone-300 p-3 border bg-stone-50">
-                                <option value="1">1 personne</option>
-                                <option value="2" selected>2 personnes</option>
-                                <option value="3">3 personnes</option>
-                                <option value="4">4 personnes</option>
-                                <option value="5">5 personnes</option>
-                                <option value="6">6 personnes</option>
-                                <option value="7">7 personnes</option>
-                                <option value="8">8 personnes</option>
+                            <label class="block text-sm font-semibold text-stone-700 mb-1">Personnes</label>
+                            <select class="w-full rounded-lg border-stone-300 p-3 border bg-stone-50 text-sm">
+                                <option>1</option>
+                                <option selected>2</option>
+                                <option>3</option>
+                                <option>4</option>
+                                <option>5</option>
+                                <option>6</option>
+                                <option>7</option>
+                                <option>8</option>
                             </select>
                         </div>
-                        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 px-4 rounded-lg transition-all shadow-lg text-lg mt-4">Confirmer</button>
-                        <p id="form-message" class="hidden text-green-700 bg-green-100 p-4 rounded-lg font-semibold text-center mt-4">✅ Votre demande a bien été envoyée !</p>
+                        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 md:py-4 px-4 rounded-lg transition-all shadow-lg text-base md:text-lg mt-4">Confirmer</button>
+                        <p id="form-message" class="hidden text-green-700 bg-green-100 p-3 rounded-lg font-semibold text-center mt-4 text-sm">✅ Votre demande a bien été envoyée !</p>
                     </form>
                 </div>
             </div>
         </div>
     </section>
 
-    <footer class="bg-stone-950 text-stone-400 py-16 text-sm border-t border-stone-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-12">
+    <!-- FOOTER -->
+    <footer class="bg-stone-950 text-stone-400 py-12 text-sm border-t border-stone-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-                <h3 class="text-white font-playfair text-2xl mb-6">Casa Preziosa</h3>
-                <p class="mb-4 text-stone-500">La véritable pizza napolitaine à Thionville.</p>
-                <p class="mb-2 flex items-center"><span class="mr-2">📍</span> 10 Cour Du Mersch, 57100 Thionville</p>
-                <p class="flex items-center"><span class="mr-2">📞</span> +33 3 54 86 02 83</p>
+                <h3 class="text-white font-playfair text-xl mb-4">Casa Preziosa</h3>
+                <p class="mb-4 text-stone-500 text-xs md:text-sm">La véritable pizza napolitaine à Thionville.</p>
+                <p class="mb-2 flex items-center text-xs md:text-sm"><span class="mr-2">📍</span> 10 Cour Du Mersch, 57100 Thionville</p>
+                <p class="flex items-center text-xs md:text-sm"><span class="mr-2">📞</span> +33 3 54 86 02 83</p>
             </div>
             <div>
-                <h3 class="text-white font-playfair text-2xl mb-6">Horaires</h3>
-                <ul class="space-y-3 text-stone-500">
-                    <li class="flex justify-between border-b border-stone-800 pb-2"><span>Mardi - Jeudi</span> <span>11h45 - 14h00</span></li>
-                    <li class="flex justify-between border-b border-stone-800 pb-2"><span>Vendredi - Samedi</span> <span>11h45 - 14h00 / 18h45 - 22h00</span></li>
-                    <li class="flex justify-between pb-2"><span>Dimanche - Lundi</span> <span>Fermé</span></li>
+                <h3 class="text-white font-playfair text-xl mb-4">Horaires</h3>
+                <ul class="space-y-2 text-stone-500 text-xs md:text-sm">
+                    <li class="flex justify-between border-b border-stone-800 pb-1"><span>Mardi - Jeudi</span> <span>11h45 - 14h00</span></li>
+                    <li class="flex justify-between border-b border-stone-800 pb-1"><span>Vendredi - Samedi</span> <span>11h45 - 14h00 / 18h45 - 22h00</span></li>
+                    <li class="flex justify-between pb-1"><span>Dimanche - Lundi</span> <span>Fermé</span></li>
                 </ul>
             </div>
             <div>
-                <h3 class="text-white font-playfair text-2xl mb-6">Informations Légales</h3>
-                <ul class="space-y-3">
+                <h3 class="text-white font-playfair text-xl mb-4">Informations Légales</h3>
+                <ul class="space-y-2 text-xs md:text-sm">
                     <li><a href="#" onclick="openModal('modal-mentions')" class="hover:text-amber-500 transition-colors">Mentions Légales</a></li>
                     <li><a href="#" onclick="openModal('modal-privacy')" class="hover:text-amber-500 transition-colors">Confidentialité (RGPD)</a></li>
                     <li><a href="#" onclick="openModal('modal-cgv')" class="hover:text-amber-500 transition-colors">CGV</a></li>
                 </ul>
             </div>
         </div>
-        <div class="text-center mt-16 pt-8 border-t border-stone-800 text-stone-600">
+        <div class="text-center mt-8 pt-6 border-t border-stone-800 text-stone-600 text-xs">
             &copy; 2024 Casa Preziosa. Tous droits réservés.
         </div>
     </footer>
 
-    <!-- MODALES -->
-    <div id="modal-mentions" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('modal-mentions')">&times;</span><h2 class="font-playfair text-3xl mb-4 text-amber-500">Mentions Légales</h2><p class="text-sm">Éditeur du site : Casa Preziosa<br>10 Cour Du Mersch, 57100 Thionville<br>Téléphone : +33 3 54 86 02 83<br>Hébergement : [Nom de l'hébergeur]</p></div></div>
-    <div id="modal-privacy" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('modal-privacy')">&times;</span><h2 class="font-playfair text-3xl mb-4 text-amber-500">Politique de Confidentialité</h2><p class="text-sm">Vos données saisies sont uniquement utilisées pour gérer votre réservation. Conformément au RGPD, vous pouvez demander leur suppression par téléphone.</p></div></div>
-    <div id="modal-cgv" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('modal-cgv')">&times;</span><h2 class="font-playfair text-3xl mb-4 text-amber-500">CGV</h2><p class="text-sm">1. Réservations gratuites sous réserve de confirmation.<br>2. Annulation : merci de prévenir 2h à l'avance.<br>3. Prix TTC.</p></div></div>
+    <!-- MODALES LÉGALES -->
+    <div id="modal-mentions" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('modal-mentions')">&times;</span><h2 class="font-playfair text-2xl mb-4 text-amber-500">Mentions Légales</h2><p class="text-sm">Éditeur du site : Casa Preziosa<br>10 Cour Du Mersch, 57100 Thionville<br>Téléphone : +33 3 54 86 02 83<br>Hébergement : [Nom de l'hébergeur]</p></div></div>
+    <div id="modal-privacy" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('modal-privacy')">&times;</span><h2 class="font-playfair text-2xl mb-4 text-amber-500">Politique de Confidentialité</h2><p class="text-sm">Vos données saisies sont uniquement utilisées pour gérer votre réservation. Conformément au RGPD, vous pouvez demander leur suppression par téléphone.</p></div></div>
+    <div id="modal-cgv" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('modal-cgv')">&times;</span><h2 class="font-playfair text-2xl mb-4 text-amber-500">CGV</h2><p class="text-sm">1. Réservations gratuites sous réserve de confirmation.<br>2. Annulation : merci de prévenir 2h à l'avance.<br>3. Prix TTC.</p></div></div>
 
     <!-- SCRIPTS -->
     <script>
@@ -310,38 +503,38 @@
         gsap.registerPlugin(ScrollTrigger);
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Navbar
             const navbar = document.getElementById('navbar');
             window.addEventListener('scroll', () => {
                 if (window.scrollY > 50) navbar.classList.add('scrolled');
                 else navbar.classList.remove('scrolled');
             });
 
-            gsap.utils.toArray('.dish-container').forEach(container => {
-                gsap.from(container, {
-                    opacity: 0, y: 30, duration: 0.6, ease: "power2.out",
-                    scrollTrigger: { trigger: container, start: "top 90%", toggleActions: "play none none reverse" }
+            // Animation d'apparition fluide au scroll
+            gsap.utils.toArray('.dish-card').forEach(card => {
+                gsap.from(card, {
+                    opacity: 0, y: 40, duration: 0.6, ease: "power2.out",
+                    scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none reverse" }
                 });
             });
 
-            // Simulation de l'envoi pour la présentation
+            // Formulaire (simulation pour la démo)
             const bookingForm = document.getElementById('booking-form');
             const formMessage = document.getElementById('form-message');
-
-            bookingForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const submitBtn = bookingForm.querySelector('button[type="submit"]');
-                const originalText = submitBtn.textContent;
-                
-                submitBtn.textContent = "Envoi en cours...";
-                
-                setTimeout(() => {
-                    formMessage.classList.remove('hidden');
-                    bookingForm.reset();
-                    submitBtn.textContent = originalText;
-                    
-                    setTimeout(() => { formMessage.classList.add('hidden'); }, 5000);
-                }, 1000);
-            });
+            if(bookingForm) {
+                bookingForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const btn = bookingForm.querySelector('button');
+                    const txt = btn.textContent;
+                    btn.textContent = "Envoi...";
+                    setTimeout(() => {
+                        formMessage.classList.remove('hidden');
+                        bookingForm.reset();
+                        btn.textContent = txt;
+                        setTimeout(() => formMessage.classList.add('hidden'), 5000);
+                    }, 800);
+                });
+            }
         });
     </script>
 </body>
